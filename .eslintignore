@@ -1,0 +1,8 @@
+node_modules/
+contracts/
+artifacts/
+cache/
+deployed/
+drafts/
+env-contracts.js
+hardhat.config.ts
