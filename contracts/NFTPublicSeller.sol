@@ -59,14 +59,20 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         founderDetails = _founderDetails;
 
         uint256 totalSupply;
+        uint256 nominalPrice;
+        uint256 maxSupply;
         for (uint256 i = 0; i < _nftTypes.length; i++) {
-            (, totalSupply, , , ) = IAliumCollectible(nft).getTypeInfo(
+            (nominalPrice, totalSupply, maxSupply, , ) = IAliumCollectible(nft).getTypeInfo(
                 _nftTypes[i]
             );
 
             require(
+                nominalPrice != 0 && maxSupply > 0,
+                "Public sell: token type is not initialized"
+            );
+            require(
                 totalSupply == 0,
-                "token type was issued before from another minter"
+                "Public sell: token type was issued before from another minter"
             );
         }
 
@@ -239,7 +245,25 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
 
     function addType(uint256 _type) external onlyOwner {
         require(!resolvedNFTs[_type], "Public sell: type resolved");
-        
+
+        (
+            uint256 nominalPrice,
+            uint256 totalSupply,
+            uint256 maxSupply,
+            ,
+        ) = IAliumCollectible(nft).getTypeInfo(
+            _type
+        );
+
+        require(
+            nominalPrice != 0 && maxSupply > 0,
+            "Public sell: token type is not initialized"
+        );
+        require(
+            totalSupply == 0,
+            "Public sell: token type was issued before from another minter"
+        );
+
         resolvedNFTs[_type] = true;
         emit NftTypeAdded(_type);
     }
