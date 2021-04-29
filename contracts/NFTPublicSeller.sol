@@ -46,7 +46,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
 
     /**
      * @dev Sets the values for {_nft}, {_founderDetails} and lists of {_nftTypes},
-     * {_stablecoins}, {_whitelist}.
+     * {_stablecoins}.
      */
     constructor(
         address _nft,
@@ -243,6 +243,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         emit Bought(nft, msg.sender, _type, _items);
     }
 
+    /**
+     * @dev Add new alium NFT `_type` to public sell.
+     * Notice: Only for initialized tokens.
+     */
     function addType(uint256 _type) external onlyOwner {
         require(!resolvedNFTs[_type], "Public sell: type resolved");
 
@@ -268,6 +272,9 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         emit NftTypeAdded(_type);
     }
 
+    /**
+     * @dev Remove alium NFT `_type` from public sell.
+     */
     function removeType(uint256 _type) external onlyOwner {
         require(resolvedNFTs[_type], "Public sell: type not resolved");
 
@@ -275,6 +282,9 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         emit NftTypeRemoved(_type);
     }
 
+    /**
+     * @dev Add support of new stablecoin `_address` on public sell.
+     */
     function addStablecoin(address _address) external onlyOwner {
         require(!resolvedStablecoins[_address], "Public sell: token resolved");
 
@@ -282,6 +292,9 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         emit StablecoinAdded(_address);
     }
 
+    /**
+     * @dev Remove support of stablecoin `_address` on public sell.
+     */
     function removeStablecoin(address _address) external onlyOwner {
         require(resolvedStablecoins[_address], "Public sell: token not resolved");
 
@@ -301,7 +314,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev Add stablecons to white list.
+     * @dev Add stablecoins to white list.
      *
      * Requirements:
      *
