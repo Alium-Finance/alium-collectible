@@ -246,9 +246,10 @@ describe("NFTPublicSeller", function () {
             assert.equal(await publicSeller.resolvedNFTs(expectedTokenType2), true, "Not added")
         });
 
-        it("should fail on add type that is added yet", async function () {
+        it("should fail on add type that is added yet or token type not initialized", async function () {
 
             const expectedTokenType = 1
+            const notExpectedTokenType = 2
 
             const aliumNft = await deployAliumCollectible();
             await batchCreateTokenTypes(aliumNft, {
@@ -266,6 +267,7 @@ describe("NFTPublicSeller", function () {
             );
 
             expectRevert(publicSeller.addType(expectedTokenType), "Public sell: type resolved")
+            expectRevert(publicSeller.addType(notExpectedTokenType), "Public sell: token type is not initialized")
         });
 
         it("should remove type", async function () {
