@@ -36,8 +36,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     mapping(address => uint256[]) public collections;
     // @dev deposited - amount of deposited tokens in USD
     mapping(address => uint256) public deposited;
-
-    uint256 public depositLimit;
+    // @dev collected cards by type
+    mapping(address => mapping(uint256 => uint256)) public collected;
+    // @dev limit of nft type per account
+    mapping(uint256 => uint256) public typeLimit;
 
     // @dev nft - address of Alium NFT token
     address public nft;
@@ -54,6 +56,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         address _nft,
         address _founderDetails,
         uint256[] memory _nftTypes,
+        uint256[] memory _typeBuyLimits,
         address[] memory _stablecoins
     ) public {
         nft = _nft;
@@ -63,7 +66,12 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         uint256 totalSupply;
         uint256 nominalPrice;
         uint256 maxSupply;
-        for (uint256 i = 0; i < _nftTypes.length; i++) {
+        uint256 l = _nftTypes.length;
+
+        require(l == _typeBuyLimits.length, "Public sell: length not equal");
+
+        uint256 i;
+        for (; i < l; i++) {
             (nominalPrice, totalSupply, maxSupply, , ) = IAliumCollectible(nft).getTypeInfo(
                 _nftTypes[i]
             );
@@ -76,6 +84,11 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
                 totalSupply == 0,
                 "Public sell: token type was issued before from another minter"
             );
+        }
+
+        i = 0;
+        for (; i < l; i++) {
+            typeLimit[_nftTypes[i]] = _typeBuyLimits[i];
         }
 
         _addResolvedTypes(_nftTypes);
@@ -181,20 +194,19 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         require(_amount == price, "Public sell: amount more then item price");
 
         token.safeTransferFrom(_msgSender(), founderDetails, _amount);
-
         (price, , , , ) = IAliumCollectible(nft).getTypeInfo(_type);
-
         deposited[msg.sender] += price;
 
-        if (depositLimit > 0) {
+        if (typeLimit[_type] > 0) {
             require(
-                deposited[msg.sender] <= depositLimit,
-                "Public sell: account deposit limit reached"
+                collected[msg.sender][_type] + 1 <= typeLimit[_type],
+                "Public sell: account bought limit reached"
             );
         }
 
         uint256 tokenId = IAliumCollectible(nft).mint(msg.sender, _type);
         collections[msg.sender].push(tokenId);
+        collected[msg.sender][_type] += 1;
 
         emit Deposited(_stablecoin, msg.sender, _amount);
         emit Bought(nft, msg.sender, _type, 1);
@@ -242,10 +254,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
 
         deposited[msg.sender] += _items * price;
 
-        if (depositLimit > 0) {
+        if (typeLimit[_type] > 0) {
             require(
-                deposited[msg.sender] <= depositLimit,
-                "Public sell: account deposit limit reached"
+                collected[msg.sender][_type] + _items <= typeLimit[_type],
+                "Public sell: account bought limit reached"
             );
         }
 
@@ -255,6 +267,8 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
             tokenId = IAliumCollectible(nft).mint(msg.sender, _type);
             collections[msg.sender].push(tokenId);
         }
+
+        collected[msg.sender][_type] += _items;
 
         require(
             collections[msg.sender].length == lb + _items,
@@ -325,10 +339,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev Set deposit limit `_value` for accounts.
+     * @dev Set bought limit `_value` for collection `_type`.
      */
-    function setAccountDepositLimit(uint256 _value) external onlyOwner {
-        depositLimit = _value;
+    function setBoughtLimit(uint256 _type, uint256 _value) external onlyOwner {
+        typeLimit[_type] = _value;
     }
 
     /**
