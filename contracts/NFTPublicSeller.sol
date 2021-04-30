@@ -325,7 +325,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev Remove support of stablecoin `_address` on public sell.
+     * @dev Set deposit limit `_value` for accounts.
      */
     function setAccountDepositLimit(uint256 _value) external onlyOwner {
         depositLimit = _value;
