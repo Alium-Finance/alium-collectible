@@ -34,8 +34,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     mapping(address => bool) public resolvedStablecoins;
     // @dev collections - users collections
     mapping(address => uint256[]) public collections;
-    // @dev deposited - amount of deposited tokens
-    mapping(address => mapping(address => uint256)) public deposited;
+    // @dev deposited - amount of deposited tokens in USD
+    mapping(address => uint256) public deposited;
+
+    uint256 public depositLimit;
 
     // @dev nft - address of Alium NFT token
     address public nft;
@@ -179,7 +181,17 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         require(_amount == price, "Public sell: amount more then item price");
 
         token.safeTransferFrom(_msgSender(), founderDetails, _amount);
-        deposited[msg.sender][_stablecoin] += _amount;
+
+        (price, , , , ) = IAliumCollectible(nft).getTypeInfo(_type);
+
+        deposited[msg.sender] += price;
+
+        if (depositLimit > 0) {
+            require(
+                deposited[msg.sender] <= depositLimit,
+                "Public sell: account deposit limit reached"
+            );
+        }
 
         uint256 tokenId = IAliumCollectible(nft).mint(msg.sender, _type);
         collections[msg.sender].push(tokenId);
@@ -225,7 +237,17 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         require(_amount == price, "Public sell: amount more then item price");
 
         token.safeTransferFrom(_msgSender(), founderDetails, _amount);
-        deposited[msg.sender][_stablecoin] += _amount;
+
+        (price, , , , ) = IAliumCollectible(nft).getTypeInfo(_type);
+
+        deposited[msg.sender] += _items * price;
+
+        if (depositLimit > 0) {
+            require(
+                deposited[msg.sender] <= depositLimit,
+                "Public sell: account deposit limit reached"
+            );
+        }
 
         uint256 tokenId;
         uint256 lb = collections[msg.sender].length;
@@ -300,6 +322,13 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
 
         resolvedStablecoins[_address] = false;
         emit StablecoinRemoved(_address);
+    }
+
+    /**
+     * @dev Remove support of stablecoin `_address` on public sell.
+     */
+    function setAccountDepositLimit(uint256 _value) external onlyOwner {
+        depositLimit = _value;
     }
 
     /**
