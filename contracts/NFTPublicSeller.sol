@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IAliumCollectible.sol";
 import "./IERC20Optional.sol";
+import "./Whitelist.sol";
 
 import {
     SafeMath,
@@ -17,7 +18,7 @@ import {
  *
  * @author Pavel Bolhar <paul.bolhar@gmail.com>
  */
-contract NFTPublicSeller is IERC721Receiver, Ownable {
+contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -38,7 +39,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     mapping(address => uint256) public deposited;
     // @dev collected cards by type
     mapping(address => mapping(uint256 => uint256)) public collected;
-    // @dev limit of nft type per account
+    // @dev limit of nft's by type per account
     mapping(uint256 => uint256) public typeLimit;
 
     // @dev nft - address of Alium NFT token
@@ -109,7 +110,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         address _stablecoin,
         uint256 _type,
         uint256 _amount
-    ) external {
+    ) external canParticipate {
         _buy(_stablecoin, _type, _amount);
     }
 
@@ -121,7 +122,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
         uint256 _type,
         uint256 _amount,
         uint256 _items
-    ) external {
+    ) external canParticipate {
         require(_items > 0, "Public sell: zero items, really?");
 
         if (_items == 1) {
@@ -339,7 +340,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
     }
 
     /**
-     * @dev Set bought limit `_value` for collection `_type`.
+     * @dev Set bought limit `_items` for collection `_type`.
      */
     function setBoughtLimit(uint256 _type, uint256 _value) external onlyOwner {
         typeLimit[_type] = _value;
@@ -369,5 +370,13 @@ contract NFTPublicSeller is IERC721Receiver, Ownable {
             resolvedStablecoins[_stablecoins[i]] = true;
             emit StablecoinAdded(_stablecoins[i]);
         }
+    }
+
+    /**
+     * @dev Access modifier for whitelisted members.
+     */
+    modifier canParticipate() {
+        require(isMember(msg.sender), "Public sell: not from private list");
+        _;
     }
 }

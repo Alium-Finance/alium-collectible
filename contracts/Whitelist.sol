@@ -59,7 +59,8 @@ contract Whitelist is Ownable {
 
     function _addMembers(address[] memory _members) internal {
         uint256 l = _members.length;
-        for (uint256 i = 0; i < l; i++) {
+        uint256 i;
+        for (i; i < l; i++) {
             require(
                 !isMember(_members[i]),
                 "Whitelist: Address is member already"
