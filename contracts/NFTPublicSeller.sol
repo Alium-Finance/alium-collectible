@@ -28,6 +28,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
     event NftTypeRemoved(uint256 nftType);
     event StablecoinAdded(address stablecoin);
     event StablecoinRemoved(address stablecoin);
+    event BuyLimitSet(uint256 nftType, uint256 items);
 
     // @dev collections - list of resolved for sell collections types
     mapping(uint256 => bool) public resolvedNFTs;
@@ -64,12 +65,13 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         issuer = msg.sender;
         founderDetails = _founderDetails;
 
-        uint256 totalSupply;
-        uint256 nominalPrice;
-        uint256 maxSupply;
         uint256 l = _nftTypes.length;
 
         require(l == _typeBuyLimits.length, "Public sell: length not equal");
+
+        uint256 totalSupply;
+        uint256 nominalPrice;
+        uint256 maxSupply;
 
         uint256 i;
         for (; i < l; i++) {
@@ -87,12 +89,14 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
             );
         }
 
+        _addResolvedTypes(_nftTypes);
+
         i = 0;
         for (; i < l; i++) {
             typeLimit[_nftTypes[i]] = _typeBuyLimits[i];
+            emit BuyLimitSet(_nftTypes[i], _typeBuyLimits[i]);
         }
 
-        _addResolvedTypes(_nftTypes);
         _addResolvedStablecoins(_stablecoins);
     }
 
@@ -281,10 +285,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
     }
 
     /**
-     * @dev Add new alium NFT `_type` to public sell.
+     * @dev Add new alium NFT `_type` with `_typeLimit` to public sell.
      * Notice: Only for initialized tokens.
      */
-    function addType(uint256 _type) external onlyOwner {
+    function addType(uint256 _type, uint _typeLimit) external onlyOwner {
         require(!resolvedNFTs[_type], "Public sell: type resolved");
 
         (
@@ -306,7 +310,9 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         );
 
         resolvedNFTs[_type] = true;
+        typeLimit[_type] = _typeLimit;
         emit NftTypeAdded(_type);
+        emit BuyLimitSet(_type, _typeLimit);
     }
 
     /**
@@ -341,9 +347,11 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
 
     /**
      * @dev Set bought limit `_items` for collection `_type`.
+     * If set zero - no limits.
      */
-    function setBoughtLimit(uint256 _type, uint256 _value) external onlyOwner {
-        typeLimit[_type] = _value;
+    function setBoughtLimit(uint256 _type, uint256 _items) external onlyOwner {
+        typeLimit[_type] = _items;
+        emit BuyLimitSet(_type, _items);
     }
 
     /**
