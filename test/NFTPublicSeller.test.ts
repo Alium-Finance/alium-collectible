@@ -494,5 +494,49 @@ describe.only("NFTPublicSeller", function () {
             )
         });
 
+        it.only("should fail if buy limit reached", async function () {
+
+            const items = 1
+            const expectedTokenType = 1
+
+            const testCollCardsAmount = 100;
+
+            const aliumNft = await deployAliumCollectible();
+            await batchCreateTokenTypes(aliumNft, {
+                prices: [testCollNomPrice],
+                amounts: [testCollCardsAmount]
+            })
+
+            const publicSeller = await deployNFTPublicSeller(
+                aliumNft.address,
+                FOUNDER,
+                [expectedTokenType],
+                [1],
+                [USDT.address]
+            );
+
+            await publicSeller.addMembers(whiteList)
+
+            await aliumNft.setMinterOnly(publicSeller.address, expectedTokenType);
+            await aliumNft.addMinter(publicSeller.address);
+
+            const decimals = await USDT.decimals();
+            const reqForOneTokenBuy: string = (new BN(items).mul(new BN(testCollNomPrice).mul(new BN(10).pow(new BN(decimals))))).toString()
+
+            await USDT.mint(BUYER, reqForOneTokenBuy)
+
+            await USDT.connect(BUYER_SIGNER).approve(publicSeller.address, reqForOneTokenBuy)
+            await publicSeller.connect(BUYER_SIGNER).buy(USDT.address, expectedTokenType, reqForOneTokenBuy)
+
+            await USDT.mint(BUYER, reqForOneTokenBuy)
+
+            await USDT.connect(BUYER_SIGNER).approve(publicSeller.address, reqForOneTokenBuy)
+
+            await expectRevert(
+                publicSeller.connect(BUYER_SIGNER).buy(USDT.address, expectedTokenType, reqForOneTokenBuy),
+                'Public sell: account purchase limit reached'
+            )
+        });
+
     })
 });

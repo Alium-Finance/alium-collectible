@@ -205,7 +205,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         if (typeLimit[_type] > 0) {
             require(
                 collected[msg.sender][_type] + 1 <= typeLimit[_type],
-                "Public sell: account bought limit reached"
+                "Public sell: account purchase limit reached"
             );
         }
 
