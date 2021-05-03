@@ -17,6 +17,7 @@ const deployNFTPublicSeller = async (
     aliumNftAddress: string,
     founderAddress: string,
     nftTypes: Array<number>,
+    typeBuyLimits: Array<number>,
     stablecoins: Array<string>
 ) => {
     const NFTPublicSeller = await ethers.getContractFactory("NFTPublicSeller");
@@ -24,6 +25,7 @@ const deployNFTPublicSeller = async (
         aliumNftAddress,
         founderAddress,
         nftTypes,
+        typeBuyLimits,
         stablecoins
     );
 };
@@ -43,7 +45,7 @@ async function batchCreateTokenTypes(aliumNft: any, data: TokenTypeData) {
     }
 }
 
-describe("NFTPublicSeller", function () {
+describe.only("NFTPublicSeller", function () {
     let accounts: Signer[];
 
     let DAI: any,
@@ -111,6 +113,7 @@ describe("NFTPublicSeller", function () {
               aliumNft.address,
               FOUNDER,
               [],
+              [],
               [DAI.address]
             );
 
@@ -134,6 +137,7 @@ describe("NFTPublicSeller", function () {
             const publicSeller = await deployNFTPublicSeller(
               aliumNft.address,
               FOUNDER,
+              [],
               [],
               [DAI.address]
             );
@@ -169,6 +173,7 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [],
+                [],
                 [DAI.address]
             );
 
@@ -191,6 +196,7 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [],
+                [],
                 [DAI.address]
             );
 
@@ -212,6 +218,7 @@ describe("NFTPublicSeller", function () {
             const publicSeller = await deployNFTPublicSeller(
                 aliumNft.address,
                 FOUNDER,
+                [],
                 [],
                 [DAI.address]
             );
@@ -238,10 +245,11 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [1],
                 [DAI.address]
             );
 
-            await publicSeller.addType(expectedTokenType2)
+            await publicSeller.addType(expectedTokenType2, 1)
 
             assert.equal(await publicSeller.resolvedNFTs(expectedTokenType2), true, "Not added")
         });
@@ -263,11 +271,12 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [1],
                 [DAI.address]
             );
 
-            expectRevert(publicSeller.addType(expectedTokenType), "Public sell: type resolved")
-            expectRevert(publicSeller.addType(notExpectedTokenType), "Public sell: token type is not initialized")
+            expectRevert(publicSeller.addType(expectedTokenType, 1), "Public sell: type resolved")
+            expectRevert(publicSeller.addType(notExpectedTokenType, 1), "Public sell: token type is not initialized")
         });
 
         it("should remove type", async function () {
@@ -286,6 +295,7 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [1],
                 [DAI.address]
             );
 
@@ -297,11 +307,17 @@ describe("NFTPublicSeller", function () {
     })
 
     describe("Sell", function () {
+        let whiteList: Array<string>;
+
+        beforeEach('private sell',async function () {
+            whiteList = [
+                BUYER
+            ]
+        });
 
         it("should buy 1 nft token type 1", async function () {
 
             const expectedTokenType = 1
-
             const expectedTokenID = 1
 
             const aliumNft = await deployAliumCollectible();
@@ -316,8 +332,11 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [1],
                 [DAI.address]
             );
+
+            await publicSeller.addMembers(whiteList)
 
             await aliumNft.setMinterOnly(publicSeller.address, expectedTokenType);
             await aliumNft.addMinter(publicSeller.address);
@@ -359,8 +378,11 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [2],
                 [USDC.address]
             );
+
+            await publicSeller.addMembers(whiteList)
 
             await aliumNft.setMinterOnly(publicSeller.address, expectedTokenType);
             await aliumNft.addMinter(publicSeller.address);
@@ -404,8 +426,11 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [1],
                 [USDT.address]
             );
+
+            await publicSeller.addMembers(whiteList)
 
             await aliumNft.setMinterOnly(publicSeller.address, expectedTokenType);
             await aliumNft.addMinter(publicSeller.address);
@@ -442,8 +467,11 @@ describe("NFTPublicSeller", function () {
                 aliumNft.address,
                 FOUNDER,
                 [expectedTokenType],
+                [1],
                 [USDT.address]
             );
+
+            await publicSeller.addMembers(whiteList)
 
             await aliumNft.setMinterOnly(publicSeller.address, expectedTokenType);
             await aliumNft.addMinter(publicSeller.address);
