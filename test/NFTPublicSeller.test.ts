@@ -45,7 +45,7 @@ async function batchCreateTokenTypes(aliumNft: any, data: TokenTypeData) {
     }
 }
 
-describe.only("NFTPublicSeller", function () {
+describe("NFTPublicSeller", function () {
     let accounts: Signer[];
 
     let DAI: any,
@@ -494,7 +494,7 @@ describe.only("NFTPublicSeller", function () {
             )
         });
 
-        it.only("should fail if buy limit reached", async function () {
+        it("should fail if buy limit reached", async function () {
 
             const items = 1
             const expectedTokenType = 1
