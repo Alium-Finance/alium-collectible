@@ -29,6 +29,8 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
     event StablecoinAdded(address stablecoin);
     event StablecoinRemoved(address stablecoin);
     event BuyLimitSet(uint256 nftType, uint256 items);
+    event TokenRepaired(address token, address recipient, uint256 amount);
+    event FounderChanged(address previous, address current);
 
     // @dev collections - list of resolved for sell collections types
     mapping(uint256 => bool) public resolvedNFTs;
@@ -65,6 +67,9 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         issuer = msg.sender;
         founderDetails = _founderDetails;
 
+        require(nft != address(0), "Public sell: zero address set");
+        require(founderDetails != address(0), "Public sell: zero address set");
+
         uint256 l = _nftTypes.length;
 
         require(l == _typeBuyLimits.length, "Public sell: length not equal");
@@ -98,12 +103,14 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         }
 
         _addResolvedStablecoins(_stablecoins);
+
+        emit FounderChanged(address(0), founderDetails);
     }
 
     /**
      * @dev Returns the length of the user's collection.
      */
-    function getCollectionLength(address _who) public view returns (uint256) {
+    function getCollectionLength(address _who) external view returns (uint256) {
         return collections[_who].length;
     }
 
@@ -143,8 +150,8 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         address,
         address,
         uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
+        bytes calldata
+    ) external virtual override returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
@@ -153,9 +160,11 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
      *
      * @notice Tokens will be transferred to the current founder of contract.
      */
-    function repairToken(address _stablecoin) public {
-        IERC20 token = IERC20(_stablecoin);
-        token.transfer(founderDetails, token.balanceOf(address(this)));
+    function repairToken(address _token) external {
+        IERC20 token = IERC20(_token);
+        uint256 amount = token.balanceOf(address(this));
+        token.transfer(founderDetails, amount);
+        emit TokenRepaired(_token, founderDetails, amount);
     }
 
     /**
@@ -163,7 +172,10 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
      *
      * Permission: only owner
      */
-    function changeFounder(address _newFounder) public onlyOwner {
+    function changeFounder(address _newFounder) external onlyOwner {
+        require(_newFounder != address(0), "Public sell: zero address set");
+
+        emit FounderChanged(founderDetails, _newFounder);
         founderDetails = _newFounder;
     }
 
@@ -190,6 +202,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
 
         IERC20 token = IERC20(_stablecoin);
         uint256 decimals = uint256(IERC20Optional(_stablecoin).decimals());
+        deposited[msg.sender] += price;
         price = price.mul(10**decimals);
 
         require(
@@ -199,8 +212,6 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         require(_amount == price, "Public sell: amount more then item price");
 
         token.safeTransferFrom(_msgSender(), founderDetails, _amount);
-        (price, , , , ) = IAliumCollectible(nft).getTypeInfo(_type);
-        deposited[msg.sender] += price;
 
         if (typeLimit[_type] > 0) {
             require(
@@ -245,6 +256,7 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
 
         IERC20 token = IERC20(_stablecoin);
         uint256 decimals = uint256(IERC20Optional(_stablecoin).decimals());
+        deposited[msg.sender] += _items * price;
         price = _items.mul(price.mul(10**decimals));
 
         require(
@@ -254,10 +266,6 @@ contract NFTPublicSeller is IERC721Receiver, Ownable, Whitelist {
         require(_amount == price, "Public sell: amount more then item price");
 
         token.safeTransferFrom(_msgSender(), founderDetails, _amount);
-
-        (price, , , , ) = IAliumCollectible(nft).getTypeInfo(_type);
-
-        deposited[msg.sender] += _items * price;
 
         if (typeLimit[_type] > 0) {
             require(
