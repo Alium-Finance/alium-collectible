@@ -1,5 +1,34 @@
+// Sources flattened with hardhat v2.0.11 https://hardhat.org
+
+// File contracts/transceiver/ITransceiver.sol
+
 pragma solidity ^0.6.2;
 
+interface ITransceiver {
+    function freeze(
+        address beneficiary,
+        uint256 amount,
+        uint8 vestingPlanId
+    ) external returns (bool success);
+}
+
+
+// File @openzeppelin/contracts/utils/Context.sol@v3.4.1
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.8.0;
+
+/*
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with GSN meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
 abstract contract Context {
     function _msgSender() internal view virtual returns (address payable) {
         return msg.sender;
@@ -11,6 +40,25 @@ abstract contract Context {
     }
 }
 
+
+// File @openzeppelin/contracts/access/Ownable.sol@v3.4.1
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity >=0.6.0 <0.8.0;
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * By default, the owner account will be the one that deploys the contract. This
+ * can later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
 abstract contract Ownable is Context {
     address private _owner;
 
@@ -64,14 +112,9 @@ abstract contract Ownable is Context {
 }
 
 
-interface ITransceiver {
-    function freeze(
-        address beneficiary,
-        uint256 amount,
-        uint8 vestingPlanId
-    ) external returns (bool success);
-}
+// File contracts/transceiver/Roles.sol
 
+pragma solidity ^0.6.2;
 contract Roles is Ownable {
     event MemberAdded(address member, uint roleType);
     event MemberRemoved(address member, uint roleType);
@@ -130,14 +173,34 @@ contract Roles is Ownable {
     }
 }
 
+
+// File contracts/IAliumVesting.sol
+
+pragma solidity =0.6.2;
+
+interface IAliumVesting {
+    function freeze(
+        address beneficiary,
+        uint256 amount,
+        uint8 vestingPlanId
+    ) external returns (bool success);
+}
+
+
+// File contracts/transceiver/Transceiver.sol
+
+pragma solidity ^0.6.2;
 // Set as freezer
 contract Transceiver is ITransceiver, Roles {
 
     // address that we should call on type receive
     mapping (uint256 => address) private _dests;
 
+    event Linked(uint256 typeId, address dest);
+
     function linkTypeToAddress(uint256 _typeId, address _dest) external onlyOwner {
         _dests[_typeId] = _dest;
+        emit Linked(_typeId, _dest);
     }
 
     function freeze(
@@ -145,15 +208,15 @@ contract Transceiver is ITransceiver, Roles {
         uint256 amount,
         uint8 vestingPlanId
     )
-    external
-    override
-    onlyReceiver
-    returns (bool success)
+        external
+        override
+        onlyReceiver
+        returns (bool success)
     {
         require(_dests[vestingPlanId] != address(0), "Transceiver: type not initialized");
         require(isTransmitter(_dests[vestingPlanId]), "Transceiver: transmitter not found");
 
-        ITransceiver(_dests[vestingPlanId]).freeze(beneficiary, amount, vestingPlanId);
+        IAliumVesting(_dests[vestingPlanId]).freeze(beneficiary, amount, vestingPlanId);
         return true;
     }
 }
