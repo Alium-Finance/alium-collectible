@@ -13,7 +13,7 @@ import "../interfaces/INFTPublicSeller.sol";
  * @author Pavel Bolhar <paul.bolhar@gmail.com>
  */
 contract AdminablePublicSell is Ownable, Privilegeable {
-    INFTPublicSeller seller;
+    INFTPublicSeller public seller;
 
     constructor(INFTPublicSeller _nftPublicSeller) public {
         seller = _nftPublicSeller;
@@ -29,18 +29,12 @@ contract AdminablePublicSell is Ownable, Privilegeable {
 
     function addManyToWhitelist(address[] calldata _wallets) external anyAdmin {
         uint256 walletsLength = _wallets.length;
-
-        address[] memory _notWLWallets;
-        uint iReal = 0;
         uint i = 0;
         for (i; i < walletsLength; i++) {
-            if (seller.isMember(_wallets[i])) {
-                _notWLWallets[iReal] = _wallets[i];
-                iReal++;
+            if (!seller.isMember(_wallets[i])) {
+                seller.addMember(_wallets[i]);
             }
         }
-
-        seller.addMembers(_notWLWallets);
     }
 
     function removeFromWhitelist(address _wallet) external anyAdmin {
