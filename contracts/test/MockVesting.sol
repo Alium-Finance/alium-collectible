@@ -1,6 +1,6 @@
 pragma solidity =0.6.2;
 
-import "../IAliumVesting.sol";
+import "../interfaces/IAliumVesting.sol";
 
 contract MockVesting is IAliumVesting {
     event Frozen(

@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Enumerable.sol";
 import "./Whitelist.sol";
-import "./IAliumCollectible.sol";
-import "./IERC20Optional.sol";
+import "./interfaces/IAliumCollectible.sol";
+import "./interfaces/IERC20Optional.sol";
 
 import {
     SafeMath,

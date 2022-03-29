@@ -4,7 +4,7 @@ pragma solidity =0.6.2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "../IAliumAchievement.sol";
+import "../interfaces/IAliumAchievement.sol";
 
 contract AliumArchievementMultiminter is IERC721Receiver, Ownable {
 

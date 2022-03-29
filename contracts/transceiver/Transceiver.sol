@@ -2,7 +2,7 @@ pragma solidity ^0.6.2;
 
 import "./ITransceiver.sol";
 import "./Roles.sol";
-import "../IAliumVesting.sol";
+import "../interfaces/IAliumVesting.sol";
 
 // Set as freezer
 contract Transceiver is ITransceiver, Roles {

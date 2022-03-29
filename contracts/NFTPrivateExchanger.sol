@@ -4,10 +4,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./IAliumCollectible.sol";
-import "./INFTPrivateSeller.sol";
-import "./IERC20Optional.sol";
-import "./IAliumVesting.sol";
+import "./interfaces/IAliumCollectible.sol";
+import "./interfaces/INFTPrivateSeller.sol";
+import "./interfaces/IERC20Optional.sol";
+import "./interfaces/IAliumVesting.sol";
 
 import {
     SafeMath,

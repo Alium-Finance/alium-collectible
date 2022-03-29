@@ -4,7 +4,7 @@ pragma solidity =0.6.2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "../IAliumCollectible.sol";
+import "../interfaces/IAliumCollectible.sol";
 
 /**
  * @title AliumCollectibleMultiminter - tokens issuer
