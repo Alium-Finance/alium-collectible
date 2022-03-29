@@ -1,6 +1,6 @@
 {
-  "name": "alium-craudfunding-sc",
-  "version": "1.0.0",
+  "name": "@alium-finance/collectible",
+  "version": "1.1.0",
   "description": "NFT craudfunding contract",
   "main": "index.js",
   "scripts": {
